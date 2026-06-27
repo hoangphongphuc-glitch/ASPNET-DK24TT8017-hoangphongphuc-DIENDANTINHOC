@@ -1,0 +1,132 @@
+@model IEnumerable<ASPNET_DK24TT8017_hoangphongphuc_DIENDANTINHOC.Models.ProjectTopic>
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Đề tài Đồ án";
+    var currentCategory = ViewBag.CurrentCategory as string;
+    var currentStatus = ViewBag.CurrentStatus as string;
+    var userRole = User.FindFirstValue(ClaimTypes.Role);
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-white font-weight-bold"><i class="bi bi-folder-fill text-info me-2"></i>Danh sách Đề tài Đồ án</h2>
+            <p class="text-muted">Quản lý, đăng ký và theo dõi tiến độ đồ án của sinh viên khoa Công nghệ thông tin</p>
+        </div>
+        @if (userRole == "GiangVien" || userRole == "GiaoVien" || userRole == "Admin")
+        {
+            <a asp-action="Create" class="btn btn-primary btn-glow"><i class="bi bi-plus-circle me-1"></i> Đề xuất Đề tài mới</a>
+        }
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Lọc đề tài -->
+    <div class="card card-premium mb-4 text-white">
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label text-light-muted">Phân loại theo Chủ đề</label>
+                    <select name="category" class="form-select form-input">
+                        <option value="">-- Tất cả chủ đề --</option>
+                        <option value="AI" selected="@(currentCategory == "AI")">AI (Trí tuệ nhân tạo)</option>
+                        <option value="Phần cứng" selected="@(currentCategory == "Phần cứng")">Phần cứng (Hardware / IoT)</option>
+                        <option value="Phần mềm" selected="@(currentCategory == "Phần mềm")">Phần mềm (Software / Web)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-light-muted">Trạng thái đề tài</label>
+                    <select name="statusSearch" class="form-select form-input">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option value="Chờ đăng ký" selected="@(currentStatus == "Chờ đăng ký")">Chờ đăng ký</option>
+                        <option value="Chờ duyệt" selected="@(currentStatus == "Chờ duyệt")">Chờ duyệt đăng ký</option>
+                        <option value="Đang làm" selected="@(currentStatus == "Đang làm")">Đang làm</option>
+                        <option value="Hoàn thành" selected="@(currentStatus == "Hoàn thành")">Hoàn thành</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end mt-4">
+                    <button type="submit" class="btn btn-info w-100 btn-glow"><i class="bi bi-funnel"></i> Lọc kết quả</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Danh sách đề tài -->
+    <div class="row">
+        @if (!Model.Any())
+        {
+            <div class="col-12 text-center py-5 text-muted card-premium">
+                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                <p class="mt-2">Không tìm thấy đề tài đồ án nào phù hợp với bộ lọc.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card card-premium h-100 text-white d-flex flex-column justify-content-between">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge @(item.Category == "AI" ? "bg-purple" : (item.Category == "Phần cứng" ? "bg-orange" : "bg-blue"))">
+                                    @item.Category
+                                </span>
+                                <span class="badge @(item.Status == "Hoàn thành" ? "bg-success" : (item.Status == "Đang làm" ? "bg-info" : (item.Status == "Chờ duyệt" ? "bg-warning" : "bg-secondary")))">
+                                    @item.Status
+                                </span>
+                            </div>
+                            <h5 class="card-title text-light-blue font-weight-bold">@item.Title</h5>
+                            <p class="card-text text-light-muted text-truncate-3">@item.Description</p>
+                            
+                            <hr class="border-secondary" />
+                            
+                            <div class="small text-light-muted">
+                                <div class="mb-1"><i class="bi bi-person-workspace me-1"></i> <strong>Giảng viên:</strong> @(item.CreatedBy?.FullName ?? "Giảng viên")</div>
+                                <div><i class="bi bi-person-fill me-1"></i> <strong>Sinh viên:</strong> @(item.Student?.FullName ?? "Chưa có ai đăng ký")</div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-dark-trans border-0 d-flex justify-content-between align-items-center">
+                            @if (User.Identity != null && User.Identity.IsAuthenticated)
+                            {
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info btn-glow">Xem chi tiết</a>
+
+                                @if (userRole == "SinhVien" && item.Status == "Chờ đăng ký")
+                                {
+                                    <form asp-action="Register" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-success btn-glow">Đăng ký</button>
+                                    </form>
+                                }
+
+                                @if (userRole == "Admin")
+                                {
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đề tài này không?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                                    </form>
+                                }
+                            }
+                            else
+                            {
+                                <a asp-controller="Account" asp-action="Login" class="btn btn-sm btn-outline-info w-100 text-center">Đăng nhập để đăng ký</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

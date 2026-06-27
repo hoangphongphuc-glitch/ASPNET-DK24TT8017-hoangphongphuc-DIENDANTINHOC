@@ -1,0 +1,236 @@
+@model ASPNET_DK24TT8017_hoangphongphuc_DIENDANTINHOC.Models.ProjectTopic
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Chi tiết Đề tài Đồ án";
+    var userRole = User.FindFirstValue(ClaimTypes.Role);
+    var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    int.TryParse(userIdString, out int userId);
+    
+    // Kiểm tra xem người dùng hiện tại có phải là giảng viên hướng dẫn của đề tài này không
+    bool isLecturerOwner = (userRole == "GiangVien" || userRole == "GiaoVien" || userRole == "Admin") && Model.CreatedById == userId;
+}
+
+<div class="container py-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="row">
+        <!-- Cột thông tin đề tài -->
+        <div class="col-lg-5 mb-4">
+            <div class="card card-premium text-white h-100">
+                <div class="card-header bg-dark-trans border-0 pt-4 px-4">
+                    <span class="badge @(Model.Category == "AI" ? "bg-purple" : (Model.Category == "Phần cứng" ? "bg-orange" : "bg-blue")) mb-2 fs-6">
+                        @Model.Category
+                    </span>
+                    <h3 class="card-title text-light-blue font-weight-bold">@Model.Title</h3>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-light-muted mb-4 fs-5" style="line-height: 1.6;">@Model.Description</p>
+                    
+                    <div class="bg-dark-trans p-3 rounded mb-4">
+                        <div class="mb-2"><i class="bi bi-person-badge-fill text-info me-2"></i><strong>Giảng viên hướng dẫn:</strong> @(Model.CreatedBy?.FullName ?? "Giảng viên")</div>
+                        <div class="mb-2"><i class="bi bi-person-fill text-info me-2"></i><strong>Sinh viên thực hiện:</strong> @(Model.Student?.FullName ?? "Chưa có sinh viên đăng ký")</div>
+                        @if (Model.Student != null && !string.IsNullOrEmpty(Model.Student.GithubUrl))
+                        {
+                            <div class="mb-2"><i class="bi bi-github text-info me-2"></i><strong>GitHub Sinh viên:</strong> <a href="@Model.Student.GithubUrl" target="_blank" class="text-info text-decoration-none">@Model.Student.GithubUrl</a></div>
+                        }
+                        <div><i class="bi bi-info-circle-fill text-info me-2"></i><strong>Trạng thái đồ án:</strong> <span class="badge bg-secondary">@Model.Status</span></div>
+                    </div>
+
+                    <!-- Quản lý trạng thái đăng ký dành cho Giảng viên -->
+                    @if (isLecturerOwner)
+                    {
+                        @if (Model.Status == "Chờ duyệt")
+                        {
+                            <div class="border border-warning p-3 rounded bg-warning-trans">
+                                <h5 class="text-warning mb-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> Yêu cầu Phê duyệt đăng ký</h5>
+                                <p class="small text-light-muted mb-3">Sinh viên <strong>@Model.Student?.FullName</strong> đã đăng ký đề tài này. Hãy duyệt đề tài để bắt đầu tiến độ.</p>
+                                <form asp-action="ApproveRegistration" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@Model.Id" />
+                                    <button type="submit" class="btn btn-warning w-100 btn-glow font-weight-bold">Phê duyệt Đăng ký & Khởi tạo Tiến độ</button>
+                                </form>
+                            </div>
+                        }
+                        else if (Model.Status == "Đang làm")
+                        {
+                            <div class="border border-info p-3 rounded bg-dark-trans">
+                                <h5 class="text-light-blue mb-3"><i class="bi bi-award-fill me-1"></i> Chấm điểm & Hoàn thành Đồ án</h5>
+                                <form asp-action="GradeProject" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@Model.Id" />
+                                    <div class="mb-3">
+                                        <label for="gradeInput" class="form-label">Điểm số tổng kết (thang điểm 10)</label>
+                                        <input type="number" step="0.1" min="0" max="10" name="grade" id="gradeInput" class="form-control form-input" placeholder="Ví dụ: 9.0" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="feedbackInput" class="form-label">Nhận xét, đánh giá của giảng viên</label>
+                                        <textarea name="feedback" id="feedbackInput" rows="3" class="form-control form-input" placeholder="Nhập nhận xét tổng kết đồ án..." required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100 btn-glow">Nhập điểm & Hoàn thành</button>
+                                </form>
+                            </div>
+                        }
+                    }
+
+                    <!-- Kết quả điểm số cuối cùng -->
+                    @if (Model.Status == "Hoàn thành")
+                    {
+                        <div class="border border-success p-3 rounded bg-success-trans text-center">
+                            <h4 class="text-success font-weight-bold mb-2"><i class="bi bi-check-circle-fill"></i> Đồ án đã hoàn thành</h4>
+                            <div class="fs-1 text-success font-weight-bold mb-2">@Model.Grade?.ToString("0.0") / 10</div>
+                            <p class="italic text-light-muted">"@Model.Feedback"</p>
+                        </div>
+                    }
+
+                    <div class="mt-4">
+                        <a asp-action="Index" class="btn btn-outline-secondary w-100">Quay lại danh sách</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột thông tin các mốc tiến độ -->
+        <div class="col-lg-7 mb-4">
+            <div class="card card-premium text-white h-100">
+                <div class="card-header bg-dark-trans border-0 pt-4 px-4">
+                    <h4 class="card-title mb-0"><i class="bi bi-list-stars text-info me-2"></i>Mốc Tiến độ Đồ án</h4>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.Status == "Chờ đăng ký" || Model.Status == "Chờ duyệt")
+                    {
+                        <div class="text-center py-5 text-muted bg-dark-trans rounded p-4">
+                            <i class="bi bi-hourglass-split" style="font-size: 3rem;"></i>
+                            <p class="mt-3 mb-0">Các mốc tiến độ (Đề cương, Giữa kỳ, Nghiệm thu) sẽ tự động được khởi tạo ngay sau khi giảng viên hướng dẫn phê duyệt đăng ký của sinh viên.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="accordion accordion-dark" id="milestonesAccordion">
+                            @foreach (var m in Model.Milestones.OrderBy(x => x.DueDate))
+                            {
+                                <div class="accordion-item bg-dark-trans text-white border-secondary mb-3 rounded overflow-hidden">
+                                    <h2 class="accordion-header" id="heading-@m.Id">
+                                        <button class="accordion-button bg-dark-trans text-white border-0 py-3 px-4 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@m.Id" aria-expanded="true" aria-controls="collapse-@m.Id">
+                                            <div class="pe-3">
+                                                <strong class="text-light-blue fs-6">@m.Title</strong>
+                                                <div class="small text-muted mt-1">Hạn nộp: @m.DueDate.ToString("dd/MM/yyyy HH:mm")</div>
+                                            </div>
+                                            <span class="badge @(m.Status == "Đạt" ? "bg-success" : (m.Status == "Chờ duyệt" ? "bg-warning" : (m.Status == "Không đạt" ? "bg-danger" : "bg-secondary"))) ms-auto me-3">
+                                                @m.Status
+                                            </span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-@m.Id" class="accordion-collapse collapse show" aria-labelledby="heading-@m.Id" data-bs-parent="#milestonesAccordion">
+                                        <div class="accordion-body px-4 pb-4 pt-2">
+                                            <p class="text-light-muted mb-3 fs-6">@m.Description</p>
+                                            
+                                            <div class="bg-dark-trans-light p-3 rounded mb-3 small">
+                                                <div class="mb-2">
+                                                    <strong>Bài nộp (GitHub URL): </strong>
+                                                    @if (!string.IsNullOrEmpty(m.GithubSubmitUrl))
+                                                    {
+                                                        <a href="@m.GithubSubmitUrl" target="_blank" class="text-info text-decoration-none">
+                                                            <i class="bi bi-github"></i> @m.GithubSubmitUrl
+                                                        </a>
+                                                        @if (m.SubmittedAt.HasValue)
+                                                        {
+                                                            <span class="text-muted ms-2">(Nộp ngày: @m.SubmittedAt.Value.ToString("dd/MM/yyyy HH:mm"))</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted italic">Chưa nộp bài</span>
+                                                    }
+                                                </div>
+                                                <div>
+                                                    <strong>Giảng viên phản hồi: </strong>
+                                                    <span class="italic text-warning">@(string.IsNullOrEmpty(m.Feedback) ? "Chưa có phản hồi" : m.Feedback)</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Form nộp bài dành cho Sinh viên -->
+                                            @if (userRole == "SinhVien" && Model.StudentId == userId && Model.Status == "Đang làm")
+                                            {
+                                                <button class="btn btn-sm btn-info btn-glow w-100 mb-2" data-bs-toggle="modal" data-bs-target="#submitMilestoneModal-@m.Id">
+                                                    <i class="bi bi-cloud-upload-fill"></i> Nộp/Cập nhật Link bài nộp
+                                                </button>
+                                            }
+
+                                            <!-- Form đánh giá dành cho Giảng viên hướng dẫn -->
+                                            @if (isLecturerOwner && m.Status == "Chờ duyệt" && Model.Status == "Đang làm")
+                                            {
+                                                <div class="border border-info p-3 rounded bg-dark-trans mt-3">
+                                                    <h6 class="text-light-blue mb-2"><i class="bi bi-check2-circle"></i> Đánh giá tiến độ của Sinh viên</h6>
+                                                    <form asp-action="EvaluateMilestone" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@m.Id" />
+                                                        <div class="mb-2">
+                                                            <label class="form-label small">Kết quả đánh giá</label>
+                                                            <select name="status" class="form-select form-input form-select-sm">
+                                                                <option value="Đạt">Đạt (Approve)</option>
+                                                                <option value="Không đạt">Không đạt (Reject)</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label class="form-label small">Góp ý / Nhận xét của giảng viên</label>
+                                                            <textarea name="feedback" rows="2" class="form-control form-input form-control-sm" placeholder="Nhận xét góp ý cho sinh viên..." required></textarea>
+                                                        </div>
+                                                        <button type="submit" class="btn btn-sm btn-info w-100 btn-glow">Gửi Đánh giá</button>
+                                                    </form>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal nộp bài dành cho sinh viên -->
+@if (userRole == "SinhVien" && Model.StudentId == userId && Model.Status == "Đang làm")
+{
+    @foreach (var m in Model.Milestones)
+    {
+        <div class="modal fade" id="submitMilestoneModal-@m.Id" tabindex="-1" aria-labelledby="submitMilestoneModalLabel-@m.Id" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content card-premium text-white">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title font-weight-bold" id="submitMilestoneModalLabel-@m.Id">Nộp tiến độ: @m.Title</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form asp-action="SubmitMilestone" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="milestoneId" value="@m.Id" />
+                        <div class="modal-body">
+                            <p class="small text-muted mb-3">Yêu cầu mốc: @m.Description</p>
+                            <div class="mb-3">
+                                <label for="githubSubmitUrl-@m.Id" class="form-label">Link GitHub Repository / Thư mục dự án</label>
+                                <input type="url" name="githubSubmitUrl" id="githubSubmitUrl-@m.Id" class="form-control form-input" value="@(string.IsNullOrEmpty(m.GithubSubmitUrl) ? Model.Student?.GithubUrl : m.GithubSubmitUrl)" placeholder="https://github.com/..." required />
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-success btn-glow">Nộp bài</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}

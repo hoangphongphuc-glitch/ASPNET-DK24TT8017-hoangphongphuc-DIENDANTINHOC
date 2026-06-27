@@ -1,0 +1,55 @@
+@model ASPNET_DK24TT8017_hoangphongphuc_DIENDANTINHOC.Models.Post
+
+@{
+    ViewData["Title"] = "Đăng bài viết mới";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card card-premium text-white">
+                <div class="card-header bg-dark-trans border-0 pt-4 px-4">
+                    <h3 class="card-title mb-0"><i class="bi bi-pencil-square me-2 text-info"></i>Đăng bài viết thảo luận mới</h3>
+                    <p class="text-muted mb-0 small">Chia sẻ kinh nghiệm lập trình, thắc mắc công nghệ, trao đổi học thuật</p>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label font-weight-bold">Tiêu đề bài viết</label>
+                            <input asp-for="Title" class="form-control form-input" placeholder="Nhập tiêu đề bài viết ngắn gọn, xúc tích..." required />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Category" class="form-label font-weight-bold">Chủ đề bài viết</label>
+                            <select asp-for="Category" class="form-select form-input">
+                                <option value="AI">AI (Trí tuệ nhân tạo)</option>
+                                <option value="Phần cứng">Phần cứng (Hardware / IoT)</option>
+                                <option value="Phần mềm">Phần mềm (Software / Web)</option>
+                            </select>
+                            <span asp-validation-for="Category" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Content" class="form-label font-weight-bold">Nội dung chi tiết bài viết</label>
+                            <textarea asp-for="Content" rows="8" class="form-control form-input" placeholder="Hãy mô tả chi tiết nội dung bạn muốn chia sẻ hoặc thảo luận..." required></textarea>
+                            <span asp-validation-for="Content" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại diễn đàn</a>
+                            <button type="submit" class="btn btn-primary btn-glow px-4">Đăng bài</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

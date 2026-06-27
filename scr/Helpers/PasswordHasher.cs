@@ -1,0 +1,28 @@
+using System.Security.Cryptography;
+using System.Text;
+
+namespace ASPNET_DK24TT8017_hoangphongphuc_DIENDANTINHOC.Helpers
+{
+    public static class PasswordHasher
+    {
+        public static string HashPassword(string password)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                var builder = new StringBuilder();
+                foreach (var b in bytes)
+                {
+                    builder.Append(b.ToString("x2"));
+                }
+                return builder.ToString();
+            }
+        }
+
+        public static bool VerifyPassword(string password, string hashedPassword)
+        {
+            // Chấp nhận đăng nhập bằng văn bản gốc (VD: "123") HOẶC mã băm SHA256 tương ứng
+            return password == hashedPassword || HashPassword(password) == hashedPassword;
+        }
+    }
+}

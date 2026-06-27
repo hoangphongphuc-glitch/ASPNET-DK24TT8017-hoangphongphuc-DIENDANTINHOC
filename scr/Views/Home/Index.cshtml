@@ -1,0 +1,111 @@
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<!-- Hero Section -->
+<div class="hero-section text-center py-5 mb-5 rounded card-premium position-relative overflow-hidden">
+    <div class="hero-bg-overlay"></div>
+    <div class="position-relative z-1 py-4 px-3">
+        <h1 class="display-3 font-weight-extrabold text-glow-light mb-3">Học tập & Sáng tạo Công nghệ</h1>
+        <p class="lead text-light-muted mb-4 max-w-600 mx-auto fs-4">
+            Hệ thống diễn đàn học thuật, chia sẻ kiến thức tin học và quản lý đồ án chuyên nghiệp khoa Công nghệ thông tin.
+        </p>
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a asp-controller="Account" asp-action="Profile" class="btn btn-primary btn-glow px-4 py-2 rounded-pill font-weight-bold">
+                    <i class="bi bi-person-fill"></i> Vào trang cá nhân của bạn
+                </a>
+                <a asp-controller="Forum" asp-action="Index" class="btn btn-outline-info px-4 py-2 rounded-pill font-weight-bold">
+                    <i class="bi bi-chat-dots-fill"></i> Thảo luận diễn đàn
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-glow px-4 py-2 rounded-pill font-weight-bold">
+                    Đăng nhập ngay
+                </a>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-outline-info px-4 py-2 rounded-pill font-weight-bold">
+                    Đăng ký tài khoản
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mb-5">
+    <div class="col-md-4 mb-4">
+        <div class="card card-premium text-white h-100 text-center py-4 px-3 card-hover-translate">
+            <div class="card-body">
+                <div class="icon-circle bg-info-trans text-info mx-auto mb-4">
+                    <i class="bi bi-chat-left-text-fill fs-2"></i>
+                </div>
+                <h4 class="font-weight-bold text-light-blue mb-3">Diễn đàn Tin học</h4>
+                <p class="text-light-muted small">
+                    Đăng bài viết chia sẻ kinh nghiệm, thảo luận các chủ đề nóng về Trí tuệ nhân tạo (AI), Thiết kế Phần cứng và Phát triển Phần mềm.
+                </p>
+                <a asp-controller="Forum" asp-action="Index" class="btn btn-sm btn-outline-info mt-3 btn-glow">Khám phá ngay</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card card-premium text-white h-100 text-center py-4 px-3 card-hover-translate">
+            <div class="card-body">
+                <div class="icon-circle bg-purple-trans text-purple mx-auto mb-4">
+                    <i class="bi bi-journal-code fs-2"></i>
+                </div>
+                <h4 class="font-weight-bold text-light-blue mb-3">Quản lý Đề tài</h4>
+                <p class="text-light-muted small">
+                    Sinh viên đăng ký các đề tài đồ án chuyên đề, giảng viên theo dõi danh sách sinh viên hướng dẫn và kiểm duyệt đề tài nhanh chóng.
+                </p>
+                <a asp-controller="Project" asp-action="Index" class="btn btn-sm btn-outline-info mt-3 btn-glow">Xem đề tài</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card card-premium text-white h-100 text-center py-4 px-3 card-hover-translate">
+            <div class="card-body">
+                <div class="icon-circle bg-success-trans text-success mx-auto mb-4">
+                    <i class="bi bi-graph-up-arrow fs-2"></i>
+                </div>
+                <h4 class="font-weight-bold text-light-blue mb-3">Mốc Tiến độ & GitHub</h4>
+                <p class="text-light-muted small">
+                    Tự động tạo các mốc tiến độ cụ thể. Sinh viên nộp bài qua liên kết GitHub Repository, giảng viên đánh giá trực tiếp trên hệ thống.
+                </p>
+                <a asp-controller="Account" asp-action="Profile" class="btn btn-sm btn-outline-info mt-3 btn-glow">Theo dõi tiến độ</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Context Panel -->
+<div class="row">
+    <div class="col-12">
+        <div class="card card-premium text-white p-4">
+            <div class="card-body">
+                <h3 class="font-weight-bold mb-4 text-glow"><i class="bi bi-info-circle-fill text-info me-2"></i>Thông tin học phần & đồ án</h3>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h5 class="text-light-blue">Đề tài đồ án môn học</h5>
+                        <p class="fs-5 font-weight-bold">Xây dựng Website Diễn đàn Tin học và Quản lý Đồ án</p>
+                        <p class="text-light-muted small">Học phần: <strong>Chuyên đề ASP.NET</strong></p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h5 class="text-light-blue">Thành viên thực hiện</h5>
+                        <ul class="list-unstyled text-light-muted">
+                            <li class="mb-1"><i class="bi bi-person-fill text-info me-1"></i> Sinh viên: <strong>Hoàng Phong Phúc</strong></li>
+                            <li class="mb-1"><i class="bi bi-card-text text-info me-1"></i> Mã số sinh viên: <strong>170124447</strong></li>
+                            <li class="mb-1"><i class="bi bi-mortarboard-fill text-info me-1"></i> Giảng viên hướng dẫn: <strong>Thầy Đoàn Phước Miền</strong></li>
+                            <li class="mb-1"><i class="bi bi-github text-info me-1"></i> GitHub Repo: <a href="https://github.com/hoangphongphuc-glitch/ASPNET-DK24TT8017-hoangphongphuc-DIENDANTINHOC" target="_blank" class="text-info text-decoration-none">ASPNET-DK24TT8017-hoangphongphuc-DIENDANTINHOC</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,148 @@
+@model ASPNET_DK24TT8017_hoangphongphuc_DIENDANTINHOC.Models.Post
+@using System.Security.Claims
+@{
+    ViewData["Title"] = Model.Title;
+    var userRole = User.FindFirstValue(ClaimTypes.Role);
+    var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    int.TryParse(userIdString, out int userId);
+}
+
+<div class="container py-4">
+    <a asp-action="Index" class="btn btn-outline-secondary mb-3"><i class="bi bi-arrow-left"></i> Trở về Diễn đàn</a>
+
+    <div class="row">
+        <!-- Cột bài viết -->
+        <div class="col-lg-8 mb-4">
+            <!-- Bài viết chính -->
+            <div class="card card-premium text-white mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-small rounded-circle bg-info d-flex align-items-center justify-content-center text-white me-2" style="width: 40px; height: 40px; font-weight: bold; font-size: 1.1rem;">
+                                @(Model.User?.FullName.Substring(0, Math.Min(1, Model.User.FullName.Length)).ToUpper() ?? "U")
+                            </div>
+                            <div>
+                                <h6 class="font-weight-bold text-light-blue mb-0">@(Model.User?.FullName ?? "Vô danh")</h6>
+                                <span class="text-muted small">Đăng lúc: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                        </div>
+                        <span class="badge @(Model.Category == "AI" ? "bg-purple" : (Model.Category == "Phần cứng" ? "bg-orange" : "bg-blue")) fs-6">
+                            @Model.Category
+                        </span>
+                    </div>
+
+                    <h2 class="font-weight-bold text-white mb-3">@Model.Title</h2>
+                    
+                    <div class="post-content text-light-muted mb-4 fs-5" style="white-space: pre-wrap; line-height: 1.7;">
+                        @Model.Content
+                    </div>
+
+                    @if (userRole == "Admin" || Model.UserId == userId)
+                    {
+                        <div class="text-end pt-3 border-top border-secondary">
+                            <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này không?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Xóa bài viết</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Khối bình luận -->
+            <div class="card card-premium text-white">
+                <div class="card-header bg-dark-trans border-0 pt-4 px-4">
+                    <h5 class="card-title mb-0"><i class="bi bi-chat-dots-fill text-info me-2"></i>Bình luận (@Model.Comments.Count)</h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Danh sách bình luận -->
+                    <div class="comments-list mb-4">
+                        @if (!Model.Comments.Any())
+                        {
+                            <p class="text-muted italic text-center py-4">Chưa có bình luận nào. Hãy bắt đầu thảo luận!</p>
+                        }
+                        else
+                        {
+                            @foreach (var c in Model.Comments)
+                            {
+                                <div class="comment-item bg-dark-trans p-3 rounded mb-3 border-start border-3 border-info">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-tiny rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white me-2" style="width: 24px; height: 24px; font-weight: bold; font-size: 0.75rem;">
+                                                @(c.User?.FullName.Substring(0, Math.Min(1, c.User.FullName.Length)).ToUpper() ?? "U")
+                                            </div>
+                                            <strong class="text-light-blue small">@(c.User?.FullName ?? "Người dùng")</strong>
+                                            <span class="text-muted small ms-2" style="font-size: 0.75rem;">· @c.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                        </div>
+                                        @if (userRole == "Admin" || c.UserId == userId)
+                                        {
+                                            <form asp-action="DeleteComment" method="post" class="d-inline" onsubmit="return confirm('Xóa bình luận này?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@c.Id" />
+                                                <button type="submit" class="btn btn-link text-danger p-0 m-0 text-decoration-none" style="font-size: 0.8rem;">Xóa</button>
+                                            </form>
+                                        }
+                                    </div>
+                                    <div class="comment-content text-light-muted mt-1 small" style="white-space: pre-wrap;">
+                                        @c.Content
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- Ô viết bình luận -->
+                    <div class="comment-box pt-3 border-top border-secondary">
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            <form asp-action="CreateComment" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="postId" value="@Model.Id" />
+                                <div class="mb-3">
+                                    <label for="commentContent" class="form-label font-weight-bold small">Viết bình luận của bạn</label>
+                                    <textarea id="commentContent" name="content" rows="3" class="form-control form-input" placeholder="Nhập nội dung thảo luận..." required></textarea>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-info btn-sm btn-glow px-4">Gửi bình luận</button>
+                                </div>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="alert alert-secondary text-center small mb-0">
+                                Vui lòng <a asp-controller="Account" asp-action="Login" class="text-info font-weight-bold">Đăng nhập</a> để tham gia bình luận thảo luận.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột thông tin phụ bên phải -->
+        <div class="col-lg-4 mb-4">
+            <div class="card card-premium text-white sticky-top" style="top: 20px;">
+                <div class="card-header bg-dark-trans border-0 pt-3">
+                    <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> Về chủ đề</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Category == "AI")
+                    {
+                        <h6 class="text-purple font-weight-bold"><i class="bi bi-cpu"></i> Trí tuệ nhân tạo (AI)</h6>
+                        <p class="small text-light-muted">Thảo luận về Machine Learning, Deep Learning, Generative AI (LLM, Diffusion models), Thị giác máy tính, Xử lý ngôn ngữ tự nhiên và các ứng dụng đột phá của AI trong cuộc sống.</p>
+                    }
+                    else if (Model.Category == "Phần cứng")
+                    {
+                        <h6 class="text-orange font-weight-bold"><i class="bi bi-motherboard"></i> Phần cứng / IoT</h6>
+                        <p class="small text-light-muted">Trao đổi về kiến trúc máy tính, lập trình nhúng (Arduino, Raspberry Pi, ESP32), thiết kế mạch điện tử, hệ thống IoT (Internet of Things) và các thiết bị phần cứng tin học.</p>
+                    }
+                    else
+                    {
+                        <h6 class="text-blue font-weight-bold"><i class="bi bi-code-slash"></i> Phần mềm / Web</h6>
+                        <p class="small text-light-muted">Nơi thảo luận về các ngôn ngữ lập trình (C#, Java, Python, Javascript), công nghệ web (ASP.NET, React, Angular, Vue), cấu trúc dữ liệu và giải thuật, kiểm thử phần mềm.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

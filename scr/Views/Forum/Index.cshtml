@@ -1,0 +1,132 @@
+@model IEnumerable<ASPNET_DK24TT8017_hoangphongphuc_DIENDANTINHOC.Models.Post>
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Diễn đàn Tin học";
+    var currentCategory = ViewBag.CurrentCategory as string;
+    var searchString = ViewBag.SearchString as string;
+    var userRole = User.FindFirstValue(ClaimTypes.Role);
+    var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    int.TryParse(userIdString, out int userId);
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-white font-weight-bold"><i class="bi bi-chat-left-text-fill text-info me-2"></i>Diễn đàn Tin học</h2>
+            <p class="text-muted">Nơi trao đổi kiến thức học thuật, thảo luận bài viết chuyên ngành CNTT</p>
+        </div>
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <a asp-action="Create" class="btn btn-primary btn-glow"><i class="bi bi-pencil-square"></i> Đăng bài viết mới</a>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-info">Đăng nhập để đăng bài</a>
+        }
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="row">
+        <!-- Cột trái: Lọc và tìm kiếm -->
+        <div class="col-lg-3 mb-4">
+            <div class="card card-premium text-white sticky-top" style="top: 20px;">
+                <div class="card-header bg-dark-trans border-0 pt-3">
+                    <h5 class="card-title mb-0"><i class="bi bi-filter"></i> Bộ lọc & Tìm kiếm</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" asp-action="Index">
+                        <div class="mb-3">
+                            <label class="form-label text-light-muted small">Tìm kiếm từ khóa</label>
+                            <div class="input-group">
+                                <input type="text" name="searchString" class="form-control form-input" placeholder="Nhập tiêu đề, nội dung..." value="@searchString" />
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-light-muted small">Chủ đề thảo luận</label>
+                            <div class="list-group list-group-dark">
+                                <a href="@Url.Action("Index", new { searchString })" class="list-group-item list-group-item-action @(string.IsNullOrEmpty(currentCategory) ? "active" : "")">
+                                    <i class="bi bi-grid-fill me-2"></i>Tất cả chủ đề
+                                </a>
+                                <a href="@Url.Action("Index", new { category = "AI", searchString })" class="list-group-item list-group-item-action @(currentCategory == "AI" ? "active" : "")">
+                                    <span class="badge bg-purple me-2">AI</span> Trí tuệ nhân tạo
+                                </a>
+                                <a href="@Url.Action("Index", new { category = "Phần cứng", searchString })" class="list-group-item list-group-item-action @(currentCategory == "Phần cứng" ? "active" : "")">
+                                    <span class="badge bg-orange me-2">Cứng</span> Phần cứng / IoT
+                                </a>
+                                <a href="@Url.Action("Index", new { category = "Phần mềm", searchString })" class="list-group-item list-group-item-action @(currentCategory == "Phần mềm" ? "active" : "")">
+                                    <span class="badge bg-blue me-2">Mềm</span> Phần mềm / Web
+                                </a>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-info w-100 btn-glow"><i class="bi bi-search"></i> Áp dụng</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Danh sách bài viết -->
+        <div class="col-lg-9">
+            @if (!Model.Any())
+            {
+                <div class="card card-premium text-white p-5 text-center">
+                    <i class="bi bi-chat-square-dots text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Chưa có bài thảo luận nào</h5>
+                    <p class="text-light-muted">Hãy là người đầu tiên đăng bài viết trên diễn đàn!</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var post in Model)
+                {
+                    <div class="card card-premium text-white mb-3">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-small rounded-circle bg-info d-flex align-items-center justify-content-center text-white me-2" style="width: 32px; height: 32px; font-weight: bold; font-size: 0.9rem;">
+                                        @(post.User?.FullName.Substring(0, Math.Min(1, post.User.FullName.Length)).ToUpper() ?? "U")
+                                    </div>
+                                    <span class="font-weight-bold text-light-blue small">@(post.User?.FullName ?? "Vô danh")</span>
+                                    <span class="text-muted small ms-2">· @post.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                                <span class="badge @(post.Category == "AI" ? "bg-purple" : (post.Category == "Phần cứng" ? "bg-orange" : "bg-blue"))">
+                                    @post.Category
+                                </span>
+                            </div>
+                            
+                            <h4 class="card-title font-weight-bold"><a asp-action="Details" asp-route-id="@post.Id" class="text-white text-decoration-none post-title-hover">@post.Title</a></h4>
+                            
+                            <p class="card-text text-light-muted text-truncate-2">@post.Content</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-secondary">
+                                <span class="small text-light-muted">
+                                    <i class="bi bi-chat-left-dots text-info me-1"></i> <strong>@post.Comments.Count</strong> bình luận
+                                </span>
+                                
+                                <div>
+                                    <a asp-action="Details" asp-route-id="@post.Id" class="btn btn-sm btn-outline-info">Chi tiết & Thảo luận</a>
+                                    
+                                    @if (userRole == "Admin" || post.UserId == userId)
+                                    {
+                                        <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này không?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@post.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger ms-1">Xóa</button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,45 @@
+@model ASPNET_DK24TT8017_hoangphongphuc_DIENDANTINHOC.Models.User
+
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">Đăng nhập Hệ thống</h2>
+        <p class="auth-subtitle">Diễn đàn Tin học & Quản lý Đồ án chuyên đề ASP.NET</p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <div asp-validation-summary="All" class="text-danger small"></div>
+            </div>
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <form asp-action="Login" method="post" class="auth-form">
+            @Html.AntiForgeryToken()
+            <div class="form-group mb-3">
+                <label for="username" class="form-label">Tài khoản (Username hoặc Email)</label>
+                <input type="text" id="username" name="username" class="form-control form-input" placeholder="Nhập tài khoản đăng nhập..." required />
+            </div>
+
+            <div class="form-group mb-4">
+                <label for="password" class="form-label">Mật khẩu</label>
+                <input type="password" id="password" name="password" class="form-control form-input" placeholder="Nhập mật khẩu..." required />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 btn-submit btn-glow">Đăng nhập</button>
+        </form>
+
+        <div class="auth-footer mt-4">
+            Chưa có tài khoản? <a asp-action="Register" class="auth-link">Đăng ký ngay</a>
+        </div>
+    </div>
+</div>
